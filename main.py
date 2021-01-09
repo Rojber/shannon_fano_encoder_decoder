@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 import tree
 import time
+import bitstring
 
 
 def encrypt_data(filename, encoded_filename):
@@ -38,18 +39,19 @@ def encrypt_data(filename, encoded_filename):
     codes_dict = root.get_codes_dict(codes_dict, [])
     print(codes_dict)
 
-    bitstring = ''
+    bitstr = ''
     for character in text:
         if character == "\n":
             character = "_NewLine"
         if character == " ":
             character = "_Space"
-        bitstring += codes_dict[character]
+        bitstr += codes_dict[character]
 
     with open(encoded_filename, 'bw') as f:
         f.write(bytes(json.dumps(codes_dict, ensure_ascii=False).encode('utf8')))
         f.write((0).to_bytes(8, 'big'))
-        f.write(bytes(int(bitstring[i : i + 8], 2) for i in range(0, len(bitstring), 8)))
+        bitstring.BitArray(bin=bitstr).tofile(f)
+        # f.write(bytes(int(bitstring[i : i + 8], 2) for i in range(0, len(bitstring), 8)))
 
     end = time.time()
     print("Encoding finished in " + str(end - start) + " seconds.")
@@ -112,8 +114,7 @@ def compute(code_tree, path, sorted_probability_dict):
 if __name__ == '__main__':
     while True:
         print("Shannon-Fano encryption and decryption utility.")
-        # print("Do you want encrypt or decrypt file? (e/d)")
-        inp1 = input("Do you want encrypt or decrypt file? (e/d): ")
+        inp1 = input("Do you want to encrypt or decrypt file? (e/d): ")
         if inp1 == 'e':
             inp_e1 = input("Relative path to file: ")
             inp_e2 = input("Encoded file name: ")
