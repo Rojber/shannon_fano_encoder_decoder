@@ -6,6 +6,7 @@ import time
 import bitstring
 import os
 
+
 def decrypt_data(path):
     file = open(path, 'rb+')
     char_counter = os.path.getsize(path)
@@ -34,6 +35,7 @@ def decrypt_data(path):
     print(codes_dict)
     
     get_decoded_string(codes_dict, bitstring)
+
 
 def get_decoded_string(codes_dict, bitstring):
     # odwrócenie słownika
@@ -64,6 +66,7 @@ def get_decoded_string(codes_dict, bitstring):
     with open(decoded_string_file + ".txt", 'a') as f:
         f.write(decoded_string)
 
+
 def is_json_key_present(json, key):
     try:
         buf = json[key]
@@ -72,12 +75,16 @@ def is_json_key_present(json, key):
 
     return True
 
+
 def encrypt_data(filename, encoded_filename):
     char_probability = {}
     char_counter = 0
     start = time.time()
 
     text = open(filename, encoding="utf-8").read()
+    if text == '':
+        print('ERROR: SOURCE FILE IS EMPTY')
+        return
 
     eot_char = b'\xE2\x90\x84'.decode('utf-8')
     text += eot_char
@@ -191,17 +198,23 @@ def compute(code_tree, path, sorted_probability_dict):
 
 if __name__ == '__main__':
     while True:
-        print("Shannon-Fano encryption and decryption utility.")
+        print("\nShannon-Fano encryption and decryption utility.")
         inp1 = input("Do you want to encrypt or decrypt file? (e/d): ")
         if inp1 == 'e':
             inp_e1 = input("Relative path to file: ")
+            if not os.path.isfile(inp_e1):
+                print('ERROR: FILE NOT FOUND\n')
+                continue
             inp_e2 = input("Encoded file name: ")
             encrypt_data(inp_e1, inp_e2 + ".pack")
         elif inp1 == 'd':
             inp = input("Relative path to file: ")
+            if not os.path.isfile(inp):
+                print('ERROR: FILE NOT FOUND\n')
+                continue
             decrypt_data(inp)
         else:
-            print('WRONG COMMAND\n')
+            print('ERROR: WRONG COMMAND\n')
             continue
         inp2 = input("\nDo you want to continue with another file? (y/n): ")
         if inp2 == 'n':
