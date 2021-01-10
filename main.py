@@ -81,14 +81,17 @@ def encrypt_data(filename, encoded_filename):
     char_counter = 0
     start = time.time()
 
+    # wczytanie tekstu z pliku
     text = open(filename, encoding="utf-8").read()
     if text == '':
         print('ERROR: SOURCE FILE IS EMPTY')
         return
 
+    # dodanie znaku końca tekstu
     eot_char = b'\xE2\x90\x84'.decode('utf-8')
     text += eot_char
 
+    # tworzenie słownika prawdopodobieństwa wystąpień znaków
     for char in text:
         char_counter += 1
         if char == "\n":
@@ -106,20 +109,21 @@ def encrypt_data(filename, encoded_filename):
 
     char_probability = OrderedDict(sorted(char_probability.items()))
 
+    # obliczanie prawdopodobieństw znaków
     for char in char_probability:
         char_probability[char] = float(char_probability[char]/char_counter)
-        # print(char + " = " + str(char_probability[char]))
 
+    # tworzenie drzewa kodowania
     sorted_probability_dict = {k: v for k, v in sorted(char_probability.items(), key=lambda x: x[1], reverse=True)}
-    # print(sorted_probability_dict)
     root = tree.Tree("root")
     compute(root, [], sorted_probability_dict)
-    # root.print_tree()
 
+    # pobranie słownika znaków i ich kodów binarnych
     codes_dict = {}
     codes_dict = root.get_codes_dict(codes_dict, [])
     print(codes_dict)
 
+    # tworzenie stringa wartości binarnych
     bitstr = ''
     for character in text:
         if character == "\n":
@@ -132,20 +136,16 @@ def encrypt_data(filename, encoded_filename):
             character = "_EOT"
         bitstr += codes_dict[character]
 
+    # zapis słownika znaków i ich kodów binarnych do pliku oraz samych danych binarnych
     with open(encoded_filename, 'bw') as f:
         f.write(bytes(json.dumps(codes_dict, ensure_ascii=False).encode('utf8')))
-        # f.write((0).to_bytes(8, 'big'))
         bitstring.BitArray(bin=bitstr).tofile(f)
-        # f.write(bytes(int(bitstring[i : i + 8], 2) for i in range(0, len(bitstring), 8)))
 
     end = time.time()
     print("Encoding finished in " + str(end - start) + " seconds.")
 
 
 def compute(code_tree, path, sorted_probability_dict):
-    # print()
-    # print(sorted_probability_dict)
-    # print(path)
     last_sum = 0.0
     string_sum = 0.0
     substring = {}
@@ -170,11 +170,6 @@ def compute(code_tree, path, sorted_probability_dict):
             temp_string.pop(key)
         else:
             actual_sum = last_sum + value
-            # print()
-            # print("String sum: " + str(string_sum/2))
-            # print("Actual sum:" + str(actual_sum))
-            # print("Last sum: " + str(last_sum))
-            # print()
             if ((string_sum/2) - actual_sum < 0 and (string_sum/2) - last_sum >= 0) or ((string_sum/2) - actual_sum <= 0 and (string_sum/2) - last_sum <= 0):
                 if abs(actual_sum - (string_sum/2)) >= abs(last_sum - (string_sum/2)):
                     code_tree.add_to_tree(path + [0], ''.join(list(substring.keys())))
