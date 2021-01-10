@@ -1,9 +1,76 @@
 import json
+import sys
 from collections import OrderedDict
 import tree
 import time
 import bitstring
+import os
 
+def decrypt_data(path):
+    file = open(path, 'rb+')
+    char_counter = os.path.getsize(path)
+    
+    json_string = ""
+    is_loading_json_dic = True
+    while is_loading_json_dic:
+        char = file.read(1)
+        #print(char)
+        json_string += char.decode("utf-8")
+        char_counter -= 1
+        
+        if char.decode("utf-8") == "}":
+            is_loading_json_dic = False
+
+    # wczytanie binarnych danych
+    bin_array = file.read(char_counter)
+    file.close()
+    
+    # convert back to bin and join to one string
+    bitstring = ""
+    for i in bin_array:
+        bitstring += "{:08b}".format(i, "08b")
+
+    codes_dict = json.loads(json_string)
+    print(codes_dict)
+    
+    get_decoded_string(codes_dict, bitstring)
+
+def get_decoded_string(codes_dict, bitstring):
+    # odwrócenie słownika
+    new_json = {}
+    for k, v in codes_dict.items():
+        new_json[v] = k
+
+    decoded_string = ""
+    substring = ""
+    for bit in bitstring:
+        substring += bit
+        if is_json_key_present(new_json, substring):
+            if new_json[substring] == "_EOT":
+                break
+            elif new_json[substring] == "_NewLine":
+                decoded_string += "\n"
+            elif new_json[substring] == "_Space":
+                decoded_string += " "
+            elif new_json[substring] == "_CurlyCloseB":
+                decoded_string += "}"
+            else:
+                decoded_string += new_json[substring]
+                
+            substring = ""
+    
+    # zapisywanie rozkodowanego wyniku
+    decoded_string_file = input("Decoded file name: ")
+    with open(decoded_string_file + ".txt", 'a') as f:
+        f.write(decoded_string)
+
+def is_json_key_present(json, key):
+    try:
+        buf = json[key]
+    except KeyError:
+        return False
+
+    return True
 
 def encrypt_data(filename, encoded_filename):
     char_probability = {}
@@ -21,6 +88,8 @@ def encrypt_data(filename, encoded_filename):
             char = "_NewLine"
         if char == " ":
             char = "_Space"
+        if char == "}":
+            char = "_CurlyCloseB"
         if char == eot_char:
             char = "_EOT"
         if char in char_probability:
@@ -50,6 +119,8 @@ def encrypt_data(filename, encoded_filename):
             character = "_NewLine"
         if character == " ":
             character = "_Space"
+        if character == "}":
+            character = "_CurlyCloseB"
         if character == eot_char:
             character = "_EOT"
         bitstr += codes_dict[character]
@@ -127,8 +198,8 @@ if __name__ == '__main__':
             inp_e2 = input("Encoded file name: ")
             encrypt_data(inp_e1, inp_e2 + ".pack")
         elif inp1 == 'd':
-            # TUTAJ DODAJ WYWOŁANIE FUNKCJI OD DEKODOWANIA
-            pass
+            inp = input("Relative path to file: ")
+            decrypt_data(inp)
         else:
             print('WRONG COMMAND\n')
             continue
