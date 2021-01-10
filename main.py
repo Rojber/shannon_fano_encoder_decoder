@@ -12,12 +12,17 @@ def encrypt_data(filename, encoded_filename):
 
     text = open(filename, encoding="utf-8").read()
 
+    eot_char = b'\xE2\x90\x84'.decode('utf-8')
+    text += eot_char
+
     for char in text:
         char_counter += 1
         if char == "\n":
             char = "_NewLine"
         if char == " ":
             char = "_Space"
+        if char == eot_char:
+            char = "_EOT"
         if char in char_probability:
             char_probability[char] += 1
         else:
@@ -45,11 +50,13 @@ def encrypt_data(filename, encoded_filename):
             character = "_NewLine"
         if character == " ":
             character = "_Space"
+        if character == eot_char:
+            character = "_EOT"
         bitstr += codes_dict[character]
 
     with open(encoded_filename, 'bw') as f:
         f.write(bytes(json.dumps(codes_dict, ensure_ascii=False).encode('utf8')))
-        f.write((0).to_bytes(8, 'big'))
+        # f.write((0).to_bytes(8, 'big'))
         bitstring.BitArray(bin=bitstr).tofile(f)
         # f.write(bytes(int(bitstring[i : i + 8], 2) for i in range(0, len(bitstring), 8)))
 
