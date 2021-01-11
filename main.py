@@ -10,9 +10,13 @@ import os
 def decrypt_data(path):
     file = open(path, 'rb+')
     char_counter = os.path.getsize(path)
-    
+    if char_counter == 0:
+        print('ERROR: SOURCE FILE IS EMPTY')
+        return
+        
     json_string = ""
     is_loading_json_dic = True
+    
     while is_loading_json_dic:
         char = file.read(1)
         #print(char)
@@ -21,6 +25,9 @@ def decrypt_data(path):
         
         if char.decode("utf-8") == "}":
             is_loading_json_dic = False
+        if char_counter < 0:
+            print('ERROR: INVALID SOURCE FILE')
+            return
 
     # wczytanie binarnych danych
     bin_array = file.read(char_counter)
