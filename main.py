@@ -14,16 +14,16 @@ def decrypt_data(path):
         print('ERROR: SOURCE FILE IS EMPTY')
         return
         
-    json_string = ""
+    json_bytes = b''
     is_loading_json_dic = True
     
     while is_loading_json_dic:
         char = file.read(1)
         #print(char)
-        json_string += char.decode("utf-8")
+        json_bytes += char
         char_counter -= 1
         
-        if char.decode("utf-8") == "}":
+        if char == b'}':
             is_loading_json_dic = False
         if char_counter < 0:
             print('ERROR: INVALID SOURCE FILE')
@@ -38,7 +38,7 @@ def decrypt_data(path):
     for i in bin_array:
         bitstring += "{:08b}".format(i, "08b")
 
-    codes_dict = json.loads(json_string)
+    codes_dict = json.loads(json_bytes.decode("utf-8"))
     print(codes_dict)
     
     get_decoded_string(codes_dict, bitstring)
